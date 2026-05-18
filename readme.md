@@ -37,8 +37,8 @@ sudo apt install chromium-browser
 
 1. Clone this repository:
 ```bash
-git clone [https://github.com/Neyrian/mkm-bot.git](https://github.com/Neyrian/mkm-bot.git)
-cd mkm-bot
+git clone [git@github.com:Neyrian/MKM-auto-sell.git](git@github.com:Neyrian/MKM-auto-sell.git)
+cd MKM-auto-sell
 ```
 
 2. Install the required Python packages:
@@ -101,4 +101,4 @@ python mkmbot.py
 
 ## ⚙️ To Do
 
-- [ ] 
+- [ ] Add mobile version
