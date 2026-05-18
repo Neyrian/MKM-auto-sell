@@ -210,12 +210,20 @@ async def main():
         log("OK", "--- AUTHENTICATION COMPLETE ---")
         log("INFO", "The browser session is live and ready for card processing.")
         
-        # 2. Pass the authenticated page into our folder processor
-        await process_folder_with_auth(page)
-        
-        # 3. Clean up when finished
-        log("INFO", "All cards processed. Closing the browser...")
-        browser.stop()
+        log("INFO", "Bot is now in WATCH MODE. Waiting for photos from mobile app...")
+        try:
+            while True:
+                # Check the folder. If it's empty, it will just return and wait.
+                await process_folder_with_auth(page)
+                
+                # Wait 3 seconds before checking the folder again
+                await asyncio.sleep(3)
+                
+        except KeyboardInterrupt:
+            log("INFO", "Manual interrupt received. Shutting down...")
+        finally:
+            log("INFO", "All cards processed. Closing the browser...")
+            browser.stop()
     else:
         log("ERROR", "Session failed to start properly. Restart the script and try again.")
 
