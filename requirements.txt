@@ -1,0 +1,21 @@
+# Browser Automation
+nodriver
+
+# Computer Vision & Image Processing
+opencv-python
+numpy
+imutils
+
+# OCR (Optical Character Recognition)
+pytesseract
+
+# API Requests
+requests
+
+# We need to install tesseract engine
+# sudo apt update
+# sudo apt install tesseract-ocr
+# sudo apt install tesseract-ocr-eng tesseract-ocr-fra tesseract-ocr-jpn
+
+# Install Chromium
+# sudo apt install chromium-browser
