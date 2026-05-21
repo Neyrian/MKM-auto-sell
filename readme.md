@@ -11,7 +11,7 @@ This project features a **"PC Brain + Phone Eye"** architecture, allowing you to
 * **Smart OCR & Visual Verification:** Uses Tesseract OCR with custom noise-reduction post-processing to read card names, and verifies the exact printing/expansion using Scryfall API and ORB feature artwork matching.
 * **Stealth MKM Scraping:** Utilizes `nodriver` to spin up a stealth Chromium browser, bypassing Cloudflare's bot protection to securely log into your account and scrape live market data.
 * **Automated Selling (Auto-Lister):** Optionally navigates to the Cardmarket Sell page and automatically injects condition, language, and dynamically calculated under-cut pricing to list the card in your live inventory.
-* **Collection Management:** Automatically logs all scanned cards and pricing data (Trend, 30-Day Average, etc.) into a clean CSV database and sorts processed images into `/success` and `/failed` directories.
+* **Collection Management:** Automatically logs all scanned cards and pricing data (Trend, 30-Day Average, etc.) into a clean CSV database and sorts processed images into `/success`, `/failed`, `/not_sold` directories.
 
 ---
 
@@ -146,8 +146,3 @@ python scanner.py
 * **Live Account Interaction:** If `SELL_CARD = True`, this script **will** list items on your real Cardmarket account. Test with cheap bulk commons first to ensure your pricing logic, language mappings, and condition settings behave exactly as you expect.
 * **Terms of Service:** Automated scraping and botting may violate Cardmarket's Terms of Service. Use this tool responsibly, add reasonable delays (`asyncio.sleep`) between requests, and do not hammer their servers. The developers of this repository are not responsible for banned accounts or incorrect listings.
 
----
-
-## ⚙️ To Do
-
-- [ ] Add mobile version
