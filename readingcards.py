@@ -114,14 +114,14 @@ def extract_card_from_background(image_path):
     else:
         log("ERROR", "Extraction failed.")
 
-    if DEBUG:
-        base_filepath, _ = os.path.splitext(image_path)
-        if card is not None:
-            flat_file = f"{base_filepath}_flat.jpg"
-            cv2.imwrite(flat_file, card)
+    # if DEBUG:
+    #     base_filepath, _ = os.path.splitext(image_path)
+    #     if card is not None:
+    #         flat_file = f"{base_filepath}_flat.jpg"
+    #         cv2.imwrite(flat_file, card)
             
-        cv2.imwrite(f"{base_filepath}_debug_edges.jpg", edges)
-        cv2.imwrite(f"{base_filepath}_debug_thresh.jpg", gray)
+    #     cv2.imwrite(f"{base_filepath}_debug_edges.jpg", edges)
+    #     cv2.imwrite(f"{base_filepath}_debug_thresh.jpg", gray)
 
     return card
 
@@ -212,13 +212,13 @@ def extract_card_name(flat_card_img, image_path):
         top_crop_white = enhance_for_name(top_crop, mode="white_text")
         raw_name = pytesseract.image_to_string(top_crop_white, lang='eng+fra+jpn', config='--psm 7').strip()
         raw_name = clean_raw_name(raw_name)
-        if DEBUG:
-            base_filepath, _ = os.path.splitext(image_path)
-            cv2.imwrite(f"{base_filepath}_white_top.jpg", top_crop_white)
-    else:
-        if DEBUG:
-            base_filepath, _ = os.path.splitext(image_path)
-            cv2.imwrite(f"{base_filepath}_black_top.jpg", top_crop_black)
+    #     if DEBUG:
+    #         base_filepath, _ = os.path.splitext(image_path)
+    #         cv2.imwrite(f"{base_filepath}_white_top.jpg", top_crop_white)
+    # else:
+    #     if DEBUG:
+    #         base_filepath, _ = os.path.splitext(image_path)
+    #         cv2.imwrite(f"{base_filepath}_black_top.jpg", top_crop_black)
 
     return raw_name
 
@@ -237,11 +237,11 @@ def extract_text_from_image(image_path):
     
     if not os.path.exists(image_path):
         log("ERROR", f"File not found: {image_path}")
-        return None, None, None, None
+        return None, None
     flat_card_img = extract_card_from_background(image_path)
     
     if flat_card_img is None:
-        return None, None, None, None
+        return None, None
 
     raw_name = extract_card_name(flat_card_img, image_path)
 
