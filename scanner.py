@@ -87,6 +87,6 @@ if __name__ == '__main__':
     # Disable the default, noisy Flask startup text
     import logging
     log = logging.getLogger('werkzeug')
-    log.setLevel(logging.ERROR)
+    log.setLevel(logging.INFO)
     
     app.run(host='0.0.0.0', port=8080)

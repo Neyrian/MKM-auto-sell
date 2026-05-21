@@ -18,7 +18,7 @@ LANGUAGES = ['en', 'fr', 'ja']         # Scryfall language codes to search (e.g.
 MATCH_THRESHOLD = 50                   # Minimum ORB feature matches required to confirm the physical card matches Scryfall's art
 
 # --- FILE DIRECTORIES & LOGGING ---
-FOLDER_PATH = "./test"                 # The input directory where the raw webcam/phone photos are stored
+FOLDER_PATH = "./mobile"               # The input directory where the raw webcam/phone photos are stored
 SUCCESS_FOLDER = "./success"           # The output directory where successfully processed/listed images are moved
 FAILED_FOLDER = "./failed"             # The output directory where unreadable or failed images are moved
 CSV_FILENAME = "collection_prices.csv" # The file name for the CSV database where pricing stats are saved
