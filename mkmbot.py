@@ -227,7 +227,7 @@ async def main():
                 await process_folder_with_auth(page)
                 
                 # Wait 3 seconds before checking the folder again
-                await asyncio.sleep(3)
+                await asyncio.sleep(20)
                 
         except KeyboardInterrupt:
             log("INFO", "Manual interrupt received. Shutting down...")
