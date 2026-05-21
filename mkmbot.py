@@ -24,6 +24,7 @@ async def process_folder_with_auth(page):
     log("INFO", f"Looking for images in folder: '{FOLDER_PATH}'")
     os.makedirs(SUCCESS_FOLDER, exist_ok=True)
     os.makedirs(FAILED_FOLDER, exist_ok=True)
+    os.makedirs(NOT_SOLD_FOLDER, exist_ok=True)
 
     if not os.path.exists(FOLDER_PATH):
         log("ERROR", f"The folder '{FOLDER_PATH}' does not exist. Please create it.")
@@ -41,7 +42,7 @@ async def process_folder_with_auth(page):
     
     for filename in image_files:
         image_path = os.path.join(FOLDER_PATH, filename)
-        is_success = False
+        final_status = "FAILED"
 
         log("INFO", "=" * 50)
         log("INFO", f"PROCESSING: {filename}")
@@ -67,13 +68,16 @@ async def process_folder_with_auth(page):
                     selling_price = calculate_selling_price(market_data)
                     id_product = market_data.get("idProduct")
                     
-                    if SELL_CARD:
-                        listing_success = await sell_card_on_mkm(page, id_product, selling_price, card_lang)
-                    
-                        if listing_success:
-                            is_success = True
+                    if selling_price:
+                        if SELL_CARD:
+                            listing_success = await sell_card_on_mkm(page, id_product, selling_price, card_lang)
+                        
+                            if listing_success:
+                                final_status = "SUCCESS"
+                        else:
+                            final_status = "SUCCESS"
                     else:
-                        is_success = True
+                        final_status = "NOT_SOLD"
                 else:
                     log("ERROR", "Could not scrape market data or find idProduct.")
             else:
@@ -84,14 +88,18 @@ async def process_folder_with_auth(page):
         # Keep tract of sucess 
         # Renaming, Sorting, and CSV Logging
         try:
-            if is_success:
+            if final_status in ["SUCCESS", "NOT_SOLD"]:
                 clean_name = re.sub(r'[^\w\s]', '', official_name).strip().replace(' ', '_')
                 _, ext = os.path.splitext(filename)
                 new_filename = f"{clean_name}_{int(time.time())}{ext}"
-                success_path = os.path.join(SUCCESS_FOLDER, new_filename)
-                scopy(image_path, success_path)
-                log("INFO", f"Copy and renamed to: /success/{new_filename}")
-
+                if final_status == "SUCCESS":
+                    dest_path = os.path.join(SUCCESS_FOLDER, new_filename)
+                    csv_estimate = selling_price if SELL_CARD else market_data.get('Price Trend', '')
+                else:
+                    dest_path = os.path.join(NOT_SOLD_FOLDER, new_filename)
+                    csv_estimate = "Not Sold (Held)"
+                scopy(image_path, dest_path)
+                
                 file_exists = os.path.isfile(CSV_FILENAME)
                 with open(CSV_FILENAME, mode='a', newline='', encoding='utf-8') as f:
                     headers = [
@@ -102,9 +110,7 @@ async def process_folder_with_auth(page):
                     writer = csv.DictWriter(f, fieldnames=headers)
                     
                     if not file_exists:
-                        writer.writeheader() # Write headers only if the file is new
-                    
-                    estimated_value = market_data.get('Price Trend')
+                        writer.writeheader() 
                         
                     writer.writerow({
                         'Card Name': official_name,
@@ -114,15 +120,19 @@ async def process_folder_with_auth(page):
                         '1-Day Average': market_data.get('1-day average price', ''),
                         '7-Days Average': market_data.get('7-days average price', ''),
                         '30-Days Average': market_data.get('30-days average price', ''),
-                        'Estimated Value (Sold)': estimated_value
+                        'Estimated Value (Sold)': csv_estimate
                     })
-                log("OK", f"Saved pricing stats for {official_name} to {CSV_FILENAME}.")
+                log("OK", f"Logged {official_name} to CSV and moved to {dest_path}")
+            
             else:
                 scopy(image_path, os.path.join(FAILED_FOLDER, filename))
-                log("INFO", f"Copy {filename} to /failed")
+                log("INFO", f"Copied {filename} to /failed")
+                
         except Exception as e:
-            log("ERROR", f"Could not move file {filename}: {e}")
+            log("ERROR", f"Could not move file {filename} or write CSV: {e}")
             
+        os.remove(image_path)
+
         delay = random.uniform(3.5, 7.5)
         await asyncio.sleep(delay)
         
@@ -210,12 +220,20 @@ async def main():
         log("OK", "--- AUTHENTICATION COMPLETE ---")
         log("INFO", "The browser session is live and ready for card processing.")
         
-        # 2. Pass the authenticated page into our folder processor
-        await process_folder_with_auth(page)
-        
-        # 3. Clean up when finished
-        log("INFO", "All cards processed. Closing the browser...")
-        browser.stop()
+        log("INFO", "Bot is now in WATCH MODE. Waiting for photos from mobile app...")
+        try:
+            while True:
+                # Check the folder. If it's empty, it will just return and wait.
+                await process_folder_with_auth(page)
+                
+                # Wait 3 seconds before checking the folder again
+                await asyncio.sleep(20)
+                
+        except KeyboardInterrupt:
+            log("INFO", "Manual interrupt received. Shutting down...")
+        finally:
+            log("INFO", "All cards processed. Closing the browser...")
+            browser.stop()
     else:
         log("ERROR", "Session failed to start properly. Restart the script and try again.")
 

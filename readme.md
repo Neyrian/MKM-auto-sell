@@ -1,12 +1,15 @@
 # MTG Cardmarket Scanner & Auto-Lister 🃏🤖
 
-A fully automated, end-to-end Python pipeline that takes raw photos of physical Magic: The Gathering cards, identifies them using Computer Vision and OCR, fetches real-time market prices, and can automatically list them for sale on your live Cardmarket (MKM) account.
+A fully automated, end-to-end Python pipeline that takes raw photos of physical Magic: The Gathering cards, identifies them using Computer Vision and OCR, fetches real-time market prices, and can automatically list them for sale on your live Cardmarket (MKM) account. 
+
+This project features a **"PC Brain + Phone Eye"** architecture, allowing you to use your smartphone's camera to seamlessly scan cards directly to your PC over your local network!
 
 ## ✨ Features
 
+* **Mobile Camera Integration:** Spin up a lightweight local Flask server to turn your smartphone into a wireless scanner. Photos are beamed directly to the bot for instant processing.
 * **Computer Vision Extraction:** Uses OpenCV to automatically detect, crop, and flatten MTG cards from a raw webcam or smartphone photo, regardless of background clutter.
 * **Smart OCR & Visual Verification:** Uses Tesseract OCR with custom noise-reduction post-processing to read card names, and verifies the exact printing/expansion using Scryfall API and ORB feature artwork matching.
-* **Stealth MKM Scraping:** Utilizes `nodriver` to spin up a stealth Chromium browser, bypassing Cloudflare's bot protection to securely log into your Cardmarket account and scrape live market data.
+* **Stealth MKM Scraping:** Utilizes `nodriver` to spin up a stealth Chromium browser, bypassing Cloudflare's bot protection to securely log into your account and scrape live market data.
 * **Automated Selling (Auto-Lister):** Optionally navigates to the Cardmarket Sell page and automatically injects condition, language, and dynamically calculated under-cut pricing to list the card in your live inventory.
 * **Collection Management:** Automatically logs all scanned cards and pricing data (Trend, 30-Day Average, etc.) into a clean CSV database and sorts processed images into `/success` and `/failed` directories.
 
@@ -48,6 +51,34 @@ pip install -r requirements.txt
 
 ---
 
+## 🌐 WSL2 Network Configuration
+
+If you are running this project inside Windows Subsystem for Linux (WSL2), you need to expose the WSL network to your Local Area Network (LAN) so your phone can reach the scanner server.
+
+1. In Windows, open File Explorer, navigate to `%USERPROFILE%`, and open (or create) a file named `.wslconfig`.
+
+2. Add the following to enable Mirrored Networking Mode:
+```Ini
+[wsl2]
+networkingMode=mirrored
+```
+
+3. Save the file. Open an Administrator PowerShell and restart WSL:
+```PowerShell
+wsl --shutdown
+```
+
+4. (Optional) If your Windows Firewall blocks the connection, run this in the Admin PowerShell to allow the scanner port (default 8080) on **Private Local Network**:
+
+```PowerShell
+New-NetFirewallHyperVRule -DisplayName "WSL 8080" -Direction Inbound -Action Allow -Protocol TCP -LocalPorts 8080 -Profiles Private -RemoteAddresses 192.168.1.0/255.255.255.0
+```
+
+> To remove the rule, use the following command
+> ```Remove-NetFirewallHyperVRule -DisplayName "WSL 8080" ```
+---
+
+
 ## ⚙️ Configuration (`utils.py`)
 
 All core logic, credentials, and toggles are stored in `utils.py`. **Open this file and configure your settings before running the bot.**
@@ -64,7 +95,7 @@ DEBUG = True                     # Set to True to save OpenCV debug images
 
 ---
 
-## 📸 Usage
+## 📸 Usage (From photos)
 
 1. Create a folder named `test` (or whatever `FOLDER_PATH` is set to in `utils.py`) in the root directory.
 2. Drop your raw photos of MTG cards (`.jpg`, `.png`) into the `test` folder.
@@ -81,6 +112,24 @@ python mkmbot.py
 4. Pricing data will be saved to `collection_prices.csv`.
 
 ---
+
+## 📸 Usage (Mobile Scanning Mode)
+1. Start the Bot (Watch Mode): Open a terminal on your PC and run:
+```Bash
+python mkmbot.py
+```
+*Log into Cardmarket. Complete any Cloudflare captchas if prompted. The bot will enter "Watch Mode", waiting for images.*
+
+2. Start the Mobile Scanner: Open a second terminal on your PC and run:
+```Bash
+python scanner.py
+```
+*The terminal will output an IP address (e.g., http://192.168.1.11:8080).*
+
+3. Scan with Your Phone: *(Ensure your phone is on the same Wi-Fi network as your PC.)*
+
+    - Open your phone's web browser and go to the IP address displayed in step 2.
+    - Tap the 📸 OPEN CAMERA button, snap a picture of the card, and it will instantly beam to your PC. The bot will automatically wake up, process the card, list it, and save the data to your CSV!
 
 ## 📂 Project Structure
 
