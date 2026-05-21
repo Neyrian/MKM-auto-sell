@@ -50,11 +50,11 @@ async def authenticate_and_scrape():
     if USE_MOBILE:
         log("INFO", "Starting up in iPhone emulation mode.")
         user_agent = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Mobile/15E148 Safari/604.1"
-        browser_args = ["--window-size=390,844", "--no-sandbox"]
+        browser_args = ["--window-size=390,844", "--no-sandbox", "--disable-dev-shm-usage"]
     else:
         log("INFO", "Starting up in standard Windows Desktop mode.")
         user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
-        browser_args = ["--start-maximized", "--no-sandbox"]
+        browser_args = ["--start-maximized", "--no-sandbox", "--disable-dev-shm-usage"]
     
     # Fire up the browser and head straight to the Magic homepage.
     log("INFO", "Launching the stealth browser...")
