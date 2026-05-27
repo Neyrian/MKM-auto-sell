@@ -66,12 +66,10 @@ async def process_folder_with_auth(page):
                     
                     # Phase 4: Auto-List the Card
                     selling_price = calculate_selling_price(market_data)
-                    id_product = market_data.get("idProduct")
                     
                     if selling_price:
                         if SELL_CARD:
-                            listing_success = await sell_card_on_mkm(page, id_product, selling_price, card_lang)
-                        
+                            listing_success = await sell_card_on_mkm(page, mkm_url, selling_price, card_lang)
                             if listing_success:
                                 final_status = "SUCCESS"
                         else:

@@ -205,54 +205,93 @@ async def scrape_mkm_prices(page, mkm_url):
         log("ERROR", f"An error occurred while scraping MKM: {e}")
         return None
 
-async def sell_card_on_mkm(page, id_product, price, lang_code):
+async def sell_card_on_mkm(page, mkm_url, price, lang_code):
     """
-    Navigates to the MKM Sell page, fills the form (NM, Non-Foil, Language, Price), 
-    and submits the listing to the live inventory.
+    Navigates to the product page, mimics a human click on the 'Sell' button,
+    fills the resulting form (NM, Non-Foil, Language, Price), and submits it.
 
     Args:
         page (nodriver.Tab): The active, authenticated browser tab.
-        id_product (str): The id of card within cardmarket.
+        mkm_url (str): The direct URL to the specific Magic card on Cardmarket.
         price (str): the desire selling price
         lang_code (str): the code (e.g. fr, en...) of the card 
         
     Returns:
         bool: whether the bot successfully listed the card on mkm
     """
-    sell_url = f"https://www.cardmarket.com/en/Magic/MainPage/showSellArticle?idProduct={id_product}"
-    log("INFO", f"Navigating to Sell Page: {sell_url}")
+    log("INFO", f"Navigating to product page to locate the Sell button...")
     
-    await page.get(sell_url)
-    await asyncio.sleep(random.uniform(3.5, 5.5))
+    # 1. Go to the product page
+    await page.get(mkm_url)
     await handle_cloudflare(page)
+    await asyncio.sleep(random.uniform(2.5, 4.0))
 
+    # 2. Mimic a human: Find the "Sell" link and click it
+    js_click_sell = """
+        (() => {
+            let links = Array.from(document.querySelectorAll('a'));
+            
+            // Hunt for the link mimicking human vision (looking for the word 'Sell' or a sell endpoint)
+            let sellLink = links.find(a => {
+                let txt = a.textContent.trim().toLowerCase();
+                let href = a.href ? a.href.toLowerCase() : "";
+                
+                // Match explicit 'sell' text on the button
+                if ((txt === 'sell' || txt === 'sell yours') && !href.includes('help')) return true;
+                
+                // Fallback: match known MKM sell endpoints in the href just in case
+                if (href.includes('sell') && href.includes('product')) return true;
+                
+                return false;
+            });
+            
+            if (sellLink) {
+                sellLink.click();
+                return true;
+            }
+            return false;
+        })();
+    """
+    
+    clicked = await page.evaluate(js_click_sell)
+    
+    if not clicked:
+        log("ERROR", "Could not find the 'Sell' button on the page. MKM layout may have changed.")
+        return False
+        
+    log("INFO", "Clicked 'Sell'. Waiting for the dynamic form to load...")
+    
+    # Give the browser time to navigate to the new, valid form endpoint
+    await asyncio.sleep(random.uniform(3.5, 5.5))
+
+    # 3. Translate Scryfall language to MKM Language ID
     mkm_lang_id = MKM_LANGUAGES.get(lang_code, '1')
 
+    # 4. JavaScript to fill the form and click Submit
     js_seller = f"""
         (() => {{
             try {{
-                // 1. Set Quantity to 1
+                // Set Quantity to 1
                 let amount = document.querySelector('input[name="amount"]');
                 if(amount) amount.value = '1';
 
-                // 2. Set Price (injecting our calculated price)
+                // Set Price
                 let priceInput = document.querySelector('input[name="price"]');
                 if(priceInput) priceInput.value = '{price}';
 
-                // 3. Set Condition to Near Mint (Value '2' in MKM's dropdown)
+                // Set Condition to Near Mint (Value '2')
                 let condition = document.querySelector('select[name="idCondition"]');
                 if(condition) condition.value = '2';
 
-                // 4. Set Language
+                // Set Language
                 let lang = document.querySelector('select[name="idLanguage"]');
                 if(lang) lang.value = '{mkm_lang_id}';
 
-                // 5. Ensure Foil is unchecked
+                // Ensure Foil is unchecked
                 let foil = document.querySelector('input[name="isFoil"]');
                 if(foil) foil.checked = false;
 
-                // 6. Find and click the Submit button
-                // MKM usually uses a primary submit button on this form
+                // Find and click the Submit button
                 let submitBtn = document.querySelector('button[type="submit"]') || document.querySelector('input[type="submit"]');
                 if(submitBtn) {{
                     submitBtn.click();
@@ -269,7 +308,7 @@ async def sell_card_on_mkm(page, id_product, price, lang_code):
         success = await page.evaluate(js_seller)
         if success:
             log("OK", f"✅ Card successfully listed on Cardmarket for {price} €!")
-            await asyncio.sleep(random.uniform(4.0, 7.5)) 
+            await asyncio.sleep(random.uniform(5.0, 8.5)) 
             return True
         else:
             log("ERROR", "Failed to interact with the Sell form. The DOM might have changed.")
